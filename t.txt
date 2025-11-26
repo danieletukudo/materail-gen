@@ -1,0 +1,13 @@
+Model: ft:gpt-4.1-mini-2025-04-14:bamcraft-group::CdfMcnvO
+Tokens Used: 125
+  - Prompt: 11
+  - Completion: 114
+
+============================================================
+✓ Fine-tuning pipeline completed!
+============================================================
+Fine-tuned Model ID: ft:gpt-4.1-mini-2025-04-14:bamcraft-group::CdfMcnvO
+You can now use this model in your applications.
+============================================================
+
+(.venv) danielsamuel@Daniels-MacBook-Pro RAG % 

@@ -1,0 +1,18 @@
+# Minimal requirements for RAG-based material matching system
+# All these packages are also in the main requirements.txt
+
+# Core dependencies
+openai>=2.3.0
+python-dotenv>=1.0.0
+
+# RAG system dependencies
+chromadb>=0.4.22
+sentence-transformers>=3.0.1
+
+# Excel parsing dependencies
+pandas>=2.1.4
+openpyxl>=3.1.2
+
+# Display/formatting
+tabulate>=0.9.0
+

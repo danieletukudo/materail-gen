@@ -1,0 +1,11 @@
+__pycache__/
+*.pyc
+.DS_Store
+.env
+app.log
+*.txt
+!requirements*.txt
+!materials_list.txt
+!t.txt
+.venv/
+venv/

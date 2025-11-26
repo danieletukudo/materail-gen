@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Construction Materials Search System</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="header-content">
+                <h1 class="logo">
+                    <svg class="logo-icon" width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <rect x="2" y="2" width="28" height="28" stroke="currentColor" stroke-width="2"/>
+                        <path d="M8 12H24M8 16H24M8 20H24" stroke="currentColor" stroke-width="2"/>
+                    </svg>
+                    Material Search System
+                </h1>
+                <p class="subtitle">Advanced construction materials database and search</p>
+            </div>
+        </header>
+
+        <main class="main-content">
+            <!-- Tab Navigation -->
+            <div class="tabs">
+                <button class="tab-button active" data-tab="search">
+                    <svg class="tab-icon" width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="2"/>
+                        <path d="M13 13L18 18" stroke="currentColor" stroke-width="2"/>
+                    </svg>
+                    Text Search
+                </button>
+                <button class="tab-button" data-tab="upload">
+                    <svg class="tab-icon" width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M10 2V12M10 2L6 6M10 2L14 6" stroke="currentColor" stroke-width="2"/>
+                        <path d="M2 12V16C2 17.1046 2.89543 18 4 18H16C17.1046 18 18 17.1046 18 16V12" stroke="currentColor" stroke-width="2"/>
+                    </svg>
+                    Upload File
+                </button>
+            </div>
+
+            <!-- Search Tab Content -->
+            <div class="tab-content active" data-content="search">
+                <div class="search-layout">
+                    <!-- Left Panel: Input -->
+                    <div class="search-panel">
+                        <div class="card" id="searchCard">
+                            <div class="card-header">
+                                <h2 class="card-title">Search Parameters</h2>
+                                <p class="card-description">Enter a description to find matching construction materials using AI-powered GPT-4o</p>
+                            </div>
+                            <div class="card-body">
+                                <form id="searchForm" class="form">
+                                    <div class="form-group">
+                                        <label for="searchInput" class="form-label">Material Description</label>
+                                        <textarea 
+                                            id="searchInput" 
+                                            class="form-control" 
+                                            rows="12" 
+                                            placeholder="e.g., REPARACION DE FRENTE DE FORJADO CON PROPAM REPAR 40
+
+or: limpieza de alicatado cerámico
+
+or: demolición de aplacado pétreo"
+                                            required
+                                        ></textarea>
+                                        <span class="form-hint">Describe the construction work or material you're looking for</span>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="topK" class="form-label">Number of Results</label>
+                                        <div class="slider-group">
+                                            <input 
+                                                type="range" 
+                                                id="topK" 
+                                                class="form-slider" 
+                                                min="1" 
+                                                max="20" 
+                                                value="5"
+                                            >
+                                            <span class="slider-value" id="topKValue">5</span>
+                                        </div>
+                                    </div>
+                                    <div class="form-actions">
+                                        <button type="submit" class="btn btn-primary" id="searchButton">
+                                            <svg class="btn-icon" width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                <circle cx="6" cy="6" r="5" stroke="currentColor" stroke-width="2"/>
+                                                <path d="M10 10L14 14" stroke="currentColor" stroke-width="2"/>
+                                            </svg>
+                                            Search Materials
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right Panel: Results -->
+                    <div class="results-panel" id="resultsPanel">
+                        <!-- Loading Overlay (Scoped to Results) -->
+                        <div class="loading-overlay" id="loadingOverlay" style="display: none;">
+                            <div class="loading-spinner">
+                                <div class="spinner"></div>
+                                <p class="loading-text">Processing your request...</p>
+                                <div class="progress-logs" id="progressLogs"></div>
+                            </div>
+                        </div>
+
+                        <!-- Placeholder State -->
+                        <div id="resultsPlaceholder" class="results-placeholder">
+                            <svg class="results-placeholder-icon" width="64" height="64" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.5"/>
+                                <path d="M20 20L17 17" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                            </svg>
+                            <p>Enter a search description on the left to see AI-matched materials here.</p>
+                        </div>
+
+                        <!-- Active Results State -->
+                        <div id="resultsContainer" style="display: none; height: 100%; flex-direction: column;">
+                            <div class="results-header">
+                                <h2 class="results-title">AI Matches</h2>
+                                <div class="card-actions">
+                                    <button class="btn btn-secondary" id="downloadResults">
+                                        <svg class="btn-icon" width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                            <path d="M8 2V10M8 10L5 7M8 10L11 7" stroke="currentColor" stroke-width="2"/>
+                                            <path d="M2 12V13C2 13.5523 2.44772 14 3 14H13C13.5523 14 14 13.5523 14 13V12" stroke="currentColor" stroke-width="2"/>
+                                        </svg>
+                                        Download
+                                    </button>
+                                    <button class="btn btn-secondary" id="clearResults">
+                                        <svg class="btn-icon" width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                            <path d="M4 4L12 12M12 4L4 12" stroke="currentColor" stroke-width="2"/>
+                                        </svg>
+                                        Clear
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="results-stats" id="resultsStats"></div>
+                            <div class="results-content" id="resultsContent"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Upload Tab Content -->
+            <div class="tab-content" data-content="upload">
+                <div class="card">
+                    <div class="card-header">
+                        <h2 class="card-title">Upload Database File</h2>
+                        <p class="card-description">Upload an Excel file (.xlsx or .xls) to extract all material information</p>
+                    </div>
+                    <div class="card-body">
+                        <form id="uploadForm" class="form">
+                            <div class="upload-area" id="uploadArea">
+                                <svg class="upload-icon" width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M24 8V32M24 8L16 16M24 8L32 16" stroke="currentColor" stroke-width="3"/>
+                                    <path d="M8 32V38C8 39.1046 8.89543 40 10 40H38C39.1046 40 40 39.1046 40 38V32" stroke="currentColor" stroke-width="3"/>
+                                </svg>
+                                <p class="upload-text">
+                                    <span class="upload-text-primary">Click to upload</span>
+                                    <span class="upload-text-secondary">or drag and drop</span>
+                                </p>
+                                <p class="upload-hint">Excel files only (.xlsx, .xls) · Max 16MB</p>
+                                <input 
+                                    type="file" 
+                                    id="fileInput" 
+                                    class="upload-input" 
+                                    accept=".xlsx,.xls"
+                                    required
+                                >
+                            </div>
+                            <div class="file-info" id="fileInfo" style="display: none;">
+                                <div class="file-preview">
+                                    <svg class="file-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M7 2H15L20 7V20C20 21.1046 19.1046 22 18 22H7C5.89543 22 5 21.1046 5 20V4C5 2.89543 5.89543 2 7 2Z" stroke="currentColor" stroke-width="2"/>
+                                        <path d="M15 2V7H20" stroke="currentColor" stroke-width="2"/>
+                                    </svg>
+                                    <div class="file-details">
+                                        <span class="file-name" id="fileName"></span>
+                                        <span class="file-size" id="fileSize"></span>
+                                    </div>
+                                    <button type="button" class="btn-remove" id="removeFile" aria-label="Remove file">
+                                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                            <path d="M4 4L12 12M12 4L4 12" stroke="currentColor" stroke-width="2"/>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label for="uploadType" class="form-label">Output Type</label>
+                                <select id="uploadType" class="form-select">
+                                    <option value="upload">Standard (with codes)</option>
+                                    <option value="upload/text-only">Text only (no codes)</option>
+                                    <option value="upload/details">Full details (with prices)</option>
+                                </select>
+                            </div>
+                            <button type="submit" class="btn btn-primary" id="uploadButton">
+                                <svg class="btn-icon" width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M8 2V10M8 2L5 5M8 2L11 5" stroke="currentColor" stroke-width="2"/>
+                                    <path d="M2 10V13C2 13.5523 2.44772 14 3 14H13C13.5523 14 14 13.5523 14 13V10" stroke="currentColor" stroke-width="2"/>
+                                </svg>
+                                Process File
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Alert Container -->
+            <div class="alert-container" id="alertContainer"></div>
+        </main>
+
+        <footer class="footer">
+            <p class="footer-text">
+                © 2025 Construction Materials Search System · 
+                <a href="/api/docs" class="footer-link" target="_blank">API Documentation</a>
+            </p>
+        </footer>
+    </div>
+
+    <script>
+// ===== CONSTANTS =====
+const API_BASE_URL = window.location.origin;
+
+// ===== GLOBAL STATE =====
+let currentResults = null;
+
+// ===== DOM ELEMENTS =====
+const elements = {
+    // Tabs
+    tabButtons: document.querySelectorAll('.tab-button'),
+    tabContents: document.querySelectorAll('.tab-content'),
+    
+    // Search card
+    searchCard: document.getElementById('searchCard'),
+    
+    // Search form
+    searchForm: document.getElementById('searchForm'),
+    searchInput: document.getElementById('searchInput'),
+    searchButton: document.getElementById('searchButton'),
+    topKSlider: document.getElementById('topK'),
+    topKValue: document.getElementById('topKValue'),
+    
+    // Upload form
+    uploadForm: document.getElementById('uploadForm'),
+    uploadArea: document.getElementById('uploadArea'),
+    fileInput: document.getElementById('fileInput'),
+    fileInfo: document.getElementById('fileInfo'),
+    fileName: document.getElementById('fileName'),
+    fileSize: document.getElementById('fileSize'),
+    removeFile: document.getElementById('removeFile'),
+    uploadType: document.getElementById('uploadType'),
+    uploadButton: document.getElementById('uploadButton'),
+    
+    // Results
+    resultsPanel: document.getElementById('resultsPanel'),
+    resultsPlaceholder: document.getElementById('resultsPlaceholder'),
+    resultsContainer: document.getElementById('resultsContainer'),
+    resultsStats: document.getElementById('resultsStats'),
+    resultsContent: document.getElementById('resultsContent'),
+    downloadResults: document.getElementById('downloadResults'),
+    clearResults: document.getElementById('clearResults'),
+    
+    // Loading & Alerts
+    loadingOverlay: document.getElementById('loadingOverlay'),
+    alertContainer: document.getElementById('alertContainer')
+};
+
+// ===== INITIALIZATION =====
+document.addEventListener('DOMContentLoaded', () => {
+    initializeTabs();
+    initializeSearch();
+    initializeUpload();
+    initializeResults();
+});
+
+// ===== TAB FUNCTIONALITY =====
+function initializeTabs() {
+    elements.tabButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            const tabName = button.dataset.tab;
+            switchTab(tabName);
+        });
+    });
+}
+
+function switchTab(tabName) {
+    // Update buttons
+    elements.tabButtons.forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.tab === tabName);
+    });
+    
+    // Update content
+    elements.tabContents.forEach(content => {
+        content.classList.toggle('active', content.dataset.content === tabName);
+    });
+}
+
+// ===== SEARCH FUNCTIONALITY =====
+function initializeSearch() {
+    // Slider update
+    elements.topKSlider.addEventListener('input', (e) => {
+        elements.topKValue.textContent = e.target.value;
+    });
+    
+    // Form submission
+    elements.searchForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        await handleSearch();
+    });
+}
+
+async function handleSearch() {
+    const description = elements.searchInput.value.trim();
+    const topK = parseInt(elements.topKSlider.value);
+    
+    // Validate description
+    if (!description) {
+        showAlert('error', 'Error', 'Please enter a description');
+        return;
+    }
+    
+    try {
+        showLoadingWithProgress(true);
+        
+        // Create FormData with description
+        const formData = new FormData();
+        formData.append('description', description);
+        formData.append('top_k', topK.toString());
+        
+        const response = await fetch(`${API_BASE_URL}/api/search-with-file`, {
+            method: 'POST',
+            body: formData
+        });
+        
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({ error: 'Failed to start search' }));
+            throw new Error(errorData.error || 'Failed to start search');
+        }
+        
+        // Read the stream
+        const reader = response.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+        
+        while (true) {
+            const { done, value } = await reader.read();
+            
+            if (done) break;
+            
+            buffer += decoder.decode(value, { stream: true });
+            const lines = buffer.split('\n\n');
+            buffer = lines.pop(); // Keep incomplete line in buffer
+            
+            for (const line of lines) {
+                if (line.startsWith('data: ')) {
+                    const jsonStr = line.substring(6);
+                    try {
+                        const data = JSON.parse(jsonStr);
+                        
+                        if (data.type === 'log') {
+                            updateProgress(data.message, data.step, data.total);
+                        } else if (data.type === 'complete') {
+                            currentResults = data;
+                            displaySearchResults(data);
+                            showLoadingWithProgress(false);
+                            showAlert('success', 'Success', `Found ${data.count} matching materials${data.total_tokens ? ` (${data.total_tokens} tokens)` : ''}`);
+                        } else if (data.type === 'error') {
+                            throw new Error(data.message);
+                        }
+                    } catch (e) {
+                        console.error('Error parsing SSE data:', e);
+                    }
+                }
+            }
+        }
+        
+    } catch (error) {
+        console.error('Search error:', error);
+        showAlert('error', 'Error', error.message);
+        showLoadingWithProgress(false);
+    }
+}
+
+function displaySearchResults(data) {
+    // Hide placeholder, Show results container
+    elements.resultsPlaceholder.style.display = 'none';
+    elements.resultsContainer.style.display = 'flex';
+    
+    // Scroll to top of results in case previous scroll
+    elements.resultsContent.scrollTop = 0;
+    
+    // Display stats
+    const modelInfo = data.model_used ? ` · Model: ${data.model_used}` : '';
+    const tokenInfo = data.total_tokens ? ` · ${data.total_tokens} tokens` : '';
+    
+    elements.resultsStats.innerHTML = `
+        <div class="results-stats-content">
+            <div class="stat-item">
+                <span class="stat-label">Query</span>
+                <span class="stat-value">"${escapeHtml(data.query)}"</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">Results Found</span>
+                <span class="stat-value">${data.count}</span>
+            </div>
+            ${tokenInfo ? `
+            <div class="stat-item">
+                <span class="stat-label">Tokens Used</span>
+                <span class="stat-value">${data.total_tokens}</span>
+            </div>
+            ` : ''}
+        </div>
+    `;
+    
+    // Display materials
+    const materialsHTML = data.data.map((material, index) => {
+        const score = material.confidence_score || material.similarity_score || 0;
+        const scorePercent = (score * 100).toFixed(1);
+        const scoreColor = score > 0.8 ? 'var(--success)' : score > 0.6 ? 'var(--info)' : 'var(--warning)';
+        
+        return `
+            <div class="material-card">
+                <div class="material-header">
+                    <span class="material-code">${escapeHtml(material.codigo)}</span>
+                    <span class="material-score" style="background: ${scoreColor}">
+                        ${scorePercent}% match
+                    </span>
+                </div>
+                <div class="material-body">
+                    <div class="material-field">
+                        <span class="material-label">Description</span>
+                        <span class="material-value">${escapeHtml(material.resumen)}</span>
+                    </div>
+                    ${material.reasoning ? `
+                    <div class="material-field">
+                        <span class="material-label">AI Reasoning</span>
+                        <span class="material-value" style="color: var(--neutral-600); font-style: italic;">
+                            ${escapeHtml(material.reasoning)}
+                        </span>
+                    </div>
+                    ` : ''}
+                    ${material.tipo ? `
+                    <div class="material-field">
+                        <span class="material-label">Type</span>
+                        <span class="material-value">${escapeHtml(material.tipo)}</span>
+                    </div>
+                    ` : ''}
+                    ${material.ud ? `
+                    <div class="material-field">
+                        <span class="material-label">Unit</span>
+                        <span class="material-value">${escapeHtml(material.ud)}</span>
+                    </div>
+                    ` : ''}
+                    ${material.precio ? `
+                    <div class="material-field">
+                        <span class="material-label">Price</span>
+                        <span class="material-value material-price">${material.precio}€</span>
+                    </div>
+                    ` : ''}
+                    ${material.num_sub_materials !== undefined ? `
+                    <div class="material-field">
+                        <span class="material-label">Sub-materials</span>
+                        <span class="material-value">${material.num_sub_materials}</span>
+                    </div>
+                    ` : ''}
+                </div>
+            </div>
+        `;
+    }).join('');
+    
+    elements.resultsContent.innerHTML = materialsHTML;
+}
+
+// ===== UPLOAD FUNCTIONALITY =====
+function initializeUpload() {
+    // File input change
+    elements.fileInput.addEventListener('change', handleFileSelect);
+    
+    // Drag and drop
+    elements.uploadArea.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        elements.uploadArea.classList.add('drag-over');
+    });
+    
+    elements.uploadArea.addEventListener('dragleave', () => {
+        elements.uploadArea.classList.remove('drag-over');
+    });
+    
+    elements.uploadArea.addEventListener('drop', (e) => {
+        e.preventDefault();
+        elements.uploadArea.classList.remove('drag-over');
+        
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            elements.fileInput.files = files;
+            handleFileSelect();
+        }
+    });
+    
+    // Remove file
+    elements.removeFile.addEventListener('click', () => {
+        elements.fileInput.value = '';
+        elements.fileInfo.style.display = 'none';
+    });
+    
+    // Form submission
+    elements.uploadForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        await handleUpload();
+    });
+}
+
+function handleFileSelect() {
+    const file = elements.fileInput.files[0];
+    
+    if (!file) {
+        elements.fileInfo.style.display = 'none';
+        return;
+    }
+    
+    // Validate file type
+    const validTypes = ['.xlsx', '.xls'];
+    const fileExtension = '.' + file.name.split('.').pop().toLowerCase();
+    
+    if (!validTypes.includes(fileExtension)) {
+        showAlert('error', 'Invalid File', 'Please select an Excel file (.xlsx or .xls)');
+        elements.fileInput.value = '';
+        return;
+    }
+    
+    // Validate file size (16MB)
+    const maxSize = 16 * 1024 * 1024;
+    if (file.size > maxSize) {
+        showAlert('error', 'File Too Large', 'File size must be less than 16MB');
+        elements.fileInput.value = '';
+        return;
+    }
+    
+    // Display file info
+    elements.fileName.textContent = file.name;
+    elements.fileSize.textContent = formatFileSize(file.size);
+    elements.fileInfo.style.display = 'block';
+}
+
+async function handleUpload() {
+    const file = elements.fileInput.files[0];
+    
+    if (!file) {
+        showAlert('error', 'Error', 'Please select a file');
+        return;
+    }
+    
+    const uploadType = elements.uploadType.value;
+    
+    try {
+        showLoading(true);
+        
+        const formData = new FormData();
+        formData.append('file', file);
+        
+        const response = await fetch(`${API_BASE_URL}/api/${uploadType}`, {
+            method: 'POST',
+            body: formData
+        });
+        
+        const data = await response.json();
+        
+        if (!response.ok) {
+            throw new Error(data.error || 'Failed to process file');
+        }
+        
+        // For upload tab, we might want to show results in a modal or simple alert since we focused on Search layout
+        // But let's keep it simple: just alert success as user asked to focus on search UI
+        showAlert('success', 'Success', `Processed ${data.count} materials from file`);
+        
+    } catch (error) {
+        console.error('Upload error:', error);
+        showAlert('error', 'Error', error.message);
+    } finally {
+        showLoading(false);
+    }
+}
+
+// ===== RESULTS FUNCTIONALITY =====
+function initializeResults() {
+    elements.downloadResults.addEventListener('click', handleDownload);
+    elements.clearResults.addEventListener('click', handleClearResults);
+}
+
+function handleDownload() {
+    if (!currentResults) {
+        showAlert('error', 'Error', 'No results to download');
+        return;
+    }
+    
+    const text = currentResults.text;
+    const blob = new Blob([text], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `materials_${Date.now()}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
+    showAlert('success', 'Success', 'Results downloaded successfully');
+}
+
+function handleClearResults() {
+    currentResults = null;
+    elements.resultsContainer.style.display = 'none';
+    elements.resultsPlaceholder.style.display = 'flex';
+    elements.resultsContent.innerHTML = '';
+    elements.resultsStats.innerHTML = '';
+}
+
+// ===== LOADING OVERLAY =====
+function showLoading(show) {
+    // Global loading for Upload tab if needed, but currently reusing the one in search panel might be tricky 
+    // Let's grab the one in results panel or fallback
+    const overlay = elements.loadingOverlay;
+    overlay.style.display = show ? 'flex' : 'none';
+}
+
+function showLoadingWithProgress(show) {
+    const overlay = elements.loadingOverlay;
+    
+    if (show) {
+        // Ensure placeholder is hidden if loading starts? Or overlay covers it.
+        // Overlay is absolute inside results-panel, so it covers everything in that panel.
+        overlay.innerHTML = `
+            <div class="loading-spinner">
+                <div class="spinner"></div>
+                <p class="loading-text">Processing your request...</p>
+                <div class="progress-logs" id="progressLogs"></div>
+            </div>
+        `;
+        overlay.style.display = 'flex';
+    } else {
+        overlay.style.display = 'none';
+    }
+}
+
+function updateProgress(message, step, total) {
+    const progressLogs = document.getElementById('progressLogs');
+    if (progressLogs) {
+        const progressBar = document.createElement('div');
+        progressBar.className = 'progress-item';
+        progressBar.innerHTML = `
+            <div class="progress-bar-container">
+                <div class="progress-bar" style="width: ${(step / total) * 100}%"></div>
+            </div>
+            <p class="progress-message">${escapeHtml(message)}</p>
+        `;
+        progressLogs.innerHTML = '';  // Clear previous
+        progressLogs.appendChild(progressBar);
+    }
+}
+
+// ===== ALERT SYSTEM =====
+function showAlert(type, title, message) {
+    const alert = document.createElement('div');
+    alert.className = `alert alert-${type}`;
+    
+    const icons = {
+        success: `<svg class="alert-icon" width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M4 10L8 14L16 6" stroke="currentColor" stroke-width="2"/>
+        </svg>`,
+        error: `<svg class="alert-icon" width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="10" cy="10" r="8" stroke="currentColor" stroke-width="2"/>
+            <path d="M10 6V10M10 14V14.01" stroke="currentColor" stroke-width="2"/>
+        </svg>`,
+        info: `<svg class="alert-icon" width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="10" cy="10" r="8" stroke="currentColor" stroke-width="2"/>
+            <path d="M10 10V14M10 6V6.01" stroke="currentColor" stroke-width="2"/>
+        </svg>`
+    };
+    
+    alert.innerHTML = `
+        <div class="alert-content">
+            ${icons[type] || icons.info}
+            <div class="alert-body">
+                <div class="alert-title">${escapeHtml(title)}</div>
+                <div class="alert-message">${escapeHtml(message)}</div>
+            </div>
+            <button class="alert-close" aria-label="Close">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M4 4L12 12M12 4L4 12" stroke="currentColor" stroke-width="2"/>
+                </svg>
+            </button>
+        </div>
+    `;
+    
+    elements.alertContainer.appendChild(alert);
+    
+    // Auto dismiss after 5 seconds
+    setTimeout(() => {
+        dismissAlert(alert);
+    }, 5000);
+    
+    // Manual dismiss
+    alert.querySelector('.alert-close').addEventListener('click', () => {
+        dismissAlert(alert);
+    });
+}
+
+function dismissAlert(alert) {
+    alert.style.animation = 'slideInRight 0.3s reverse';
+    setTimeout(() => {
+        if (alert.parentElement) {
+            alert.parentElement.removeChild(alert);
+        }
+    }, 300);
+}
+
+// ===== UTILITY FUNCTIONS =====
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+function formatFileSize(bytes) {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+}
+    </script>
+</body>
+</html>
